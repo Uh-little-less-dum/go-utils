@@ -71,13 +71,15 @@ func (f File) ReadBytes() []byte {
 	return data
 }
 
-func (f File) WriteText(content string) {
+func (f File) Write(content []byte) (int, error) {
 	osFile := f.GetOsFile()
-	_, err := osFile.WriteString(content)
+	_, err := osFile.Write(content)
 	check(err)
 	err = osFile.Sync()
 	check(err)
-	osFile.Close()
+	err = osFile.Close()
+	check(err)
+	return len(content), nil
 }
 
 func (f File) GetParentDir() directory.Directory {

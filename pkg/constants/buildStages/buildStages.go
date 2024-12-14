@@ -13,4 +13,6 @@ const (
 	CloneTemplateAppStage
 	PreConflictResolveBuild
 	ResolvePluginConflicts
+	End_BuildSuccess
+	End_BuildFail
 )

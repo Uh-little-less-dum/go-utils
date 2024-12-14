@@ -4,4 +4,6 @@ type SubCommandId int
 
 const (
 	GatherAppConfig SubCommandId = iota
+	GatherPlugins
+	GatherRootPackageJson
 )

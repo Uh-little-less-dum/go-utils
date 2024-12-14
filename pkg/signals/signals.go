@@ -7,20 +7,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type SetStageMsg struct {
-	err      error
-	NewStage build_stages.BuildStage
-}
-
-func SetStage(newStage build_stages.BuildStage) tea.Cmd {
-	return func() tea.Msg {
-		return SetStageMsg{
-			err:      nil,
-			NewStage: newStage,
-		}
-	}
-}
-
 type SetUseSelectedDirMsg struct {
 	err            error
 	UseSelectedDir bool
@@ -58,6 +44,28 @@ func SetQuittingMessage(err error) tea.Cmd {
 		return SetQuittingMsg{
 			err: err,
 		}
+	}
+}
+
+type ExitWithMsg struct {
+	ExitMsg string
+}
+
+func SendBuildSuccessExit() tea.Cmd {
+	return func() tea.Msg {
+		return ExitWithMsg{ExitMsg: "Success! Your application was built successfully."}
+	}
+}
+
+func SendBuildFailExit() tea.Cmd {
+	return func() tea.Msg {
+		return ExitWithMsg{ExitMsg: "Oh no. We couldn't complete this build successfully."}
+	}
+}
+
+func SendExitWithMsg(msg string) tea.Cmd {
+	return func() tea.Msg {
+		return ExitWithMsg{ExitMsg: msg}
 	}
 }
 
@@ -139,5 +147,47 @@ type FinishInitialTemplateCloneMsg struct {
 func SendFinishInitialTemplateCloneMsg() tea.Cmd {
 	return func() tea.Msg {
 		return FinishInitialTemplateCloneMsg{}
+	}
+}
+
+type BeginInitialTemplateCloneMsg struct {
+	TargetDir string
+}
+
+func SendBeginInitialTemplateCloneMsg(targetDir string) tea.Cmd {
+	return func() tea.Msg {
+		return BeginInitialTemplateCloneMsg{
+			TargetDir: targetDir,
+		}
+	}
+}
+
+type ToPreviousStageMsg struct {
+}
+
+func SendToPreviousStageMsg() tea.Cmd {
+	return func() tea.Msg {
+		return ToPreviousStageMsg{}
+	}
+}
+
+type SetStageMsg struct {
+	err      error
+	NewStage build_stages.BuildStage
+}
+
+func SetStage(newStage build_stages.BuildStage) tea.Cmd {
+	if newStage == build_stages.End_BuildSuccess {
+		return SendBuildSuccessExit()
+	}
+
+	if newStage == build_stages.End_BuildFail {
+		return SendBuildFailExit()
+	}
+	return func() tea.Msg {
+		return SetStageMsg{
+			err:      nil,
+			NewStage: newStage,
+		}
 	}
 }

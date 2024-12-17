@@ -10,8 +10,10 @@ const (
 	ConfirmWaitForConfigMove
 	WaitForConfigMove
 	ChooseWaitOrPickConfigLoc
+	SelectPackageManager
 	CloneTemplateAppStage
 	PreConflictResolveBuild
+	PostConflictResolveBuild
 	ResolvePluginConflicts
 	End_BuildSuccess
 	End_BuildFail

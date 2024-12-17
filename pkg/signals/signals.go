@@ -90,8 +90,7 @@ func SendConfigLocMethod_WaitForClone() tea.Cmd {
 	}
 }
 
-type SetConfigLocMethod_pickFile struct {
-}
+type SetConfigLocMethod_pickFile struct{}
 
 func SendConfigLocMethod_pickFile() tea.Cmd {
 	return func() tea.Msg {
@@ -104,7 +103,7 @@ func SendUseEnvConfigResponse(wasAccepted bool) tea.Cmd {
 		if wasAccepted {
 			return SetStageMsg{
 				err:      nil,
-				NewStage: build_stages.CloneTemplateAppStage,
+				NewStage: build_stages.SelectPackageManager,
 			}
 		} else {
 			return SetStageMsg{
@@ -188,6 +187,20 @@ func SetStage(newStage build_stages.BuildStage) tea.Cmd {
 		return SetStageMsg{
 			err:      nil,
 			NewStage: newStage,
+		}
+	}
+}
+
+type SubstageCompleteMsg struct {
+	StreamId  stream_ids.StreamId
+	CommandId sub_command_ids.SubCommandId
+}
+
+func SendSubStageCompleteMsg(streamId stream_ids.StreamId, commandId sub_command_ids.SubCommandId) tea.Cmd {
+	return func() tea.Msg {
+		return SubstageCompleteMsg{
+			StreamId:  streamId,
+			CommandId: commandId,
 		}
 	}
 }

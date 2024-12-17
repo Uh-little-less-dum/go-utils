@@ -1,34 +1,61 @@
 package file_handlers_package_json
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
 
+	"github.com/Uh-little-less-dum/build/pkg/types"
 	"github.com/Uh-little-less-dum/go-utils/pkg/fs/file"
-	schemas_package_json "github.com/Uh-little-less-dum/go-utils/pkg/schemastructs/packageJson"
+	"github.com/charmbracelet/log"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 )
 
 type PackageJsonHandler struct {
 	File           file.File
 	hasInitialized bool
 	path           string
-	data           schemas_package_json.PackageJsonSchema
+	data           []byte
 }
 
-func (p *PackageJsonHandler) GetData() (*schemas_package_json.PackageJsonSchema, error) {
+func (p *PackageJsonHandler) Bytes() []byte {
 	if p.hasInitialized {
-		return &p.data, nil
+		return p.data
 	}
 	b, err := os.ReadFile(p.path)
 	if err != nil {
-		return &p.data, err
+		log.Fatalf("Failed to parse package.json file at %s", p.File.Path())
 	}
-	err = json.Unmarshal(b, &p.data)
-	if err != nil {
-		return &p.data, err
-	}
+	p.data = b
+	return b
+}
+
+func (p *PackageJsonHandler) Json() gjson.Result {
+	b := p.Bytes()
+	j := gjson.ParseBytes(b)
 	p.hasInitialized = true
-	return &p.data, nil
+	return j
+}
+
+func (p *PackageJsonHandler) ApplyDependencies(deps []types.Dependency) {
+	b := p.Bytes()
+	for _, dep := range deps {
+		d, err := sjson.SetBytes(b, fmt.Sprintf("%s.%s", dep.Type(), dep.Name()), dep.Version())
+		p.data = d
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func (p *PackageJsonHandler) Write() {
+	if !p.hasInitialized {
+		return
+	}
+	err := os.WriteFile(p.path, p.data, 0777)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func NewPackageJsonHandler(filePath string) PackageJsonHandler {

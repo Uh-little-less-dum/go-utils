@@ -1,45 +1,49 @@
 package app_config
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 
 	ulld_plugin "github.com/Uh-little-less-dum/build/pkg/classesKinda/plugin"
-	schemas_app_config "github.com/Uh-little-less-dum/go-utils/pkg/schemastructs/ulldAppConfig"
 	"github.com/charmbracelet/log"
+	"github.com/tidwall/gjson"
 )
 
 type AppConfig struct {
-	FilePath string
-	Data     schemas_app_config.AppConfig
+	filePath string
+	hasRead  bool
+	data     gjson.Result
 }
 
-func NewAppConfig(targetDir string) *AppConfig {
-	filePath := filepath.Join(targetDir, "appConfig.ulld.json")
-	b, err := os.ReadFile(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	j, err := schemas_app_config.UnmarshalAppConfig(b)
-	if err != nil {
-		log.Fatal(err)
-	}
+func NewAppConfig(filePath string) *AppConfig {
 	return &AppConfig{
-		FilePath: filePath,
-		Data:     j,
+		filePath: filePath,
+		hasRead:  false,
 	}
 }
 
-func (a *AppConfig) GatherPlugins() []ulld_plugin.Plugin {
-	var data []ulld_plugin.Plugin
-	for _, item := range a.Data.Plugins.UnionArray {
-		data = append(data, ulld_plugin.Plugin{PluginName: item.PluginsClass.Name})
+func (a *AppConfig) Json() gjson.Result {
+	if a.hasRead {
+		return a.data
 	}
-	fmt.Print(a.Data)
-	// Still need to gather plugins from the slots field.
-	// for _, k := range a.Data.Slots {
-	// if k
-	// }
-	return data
+	b, err := os.ReadFile(a.filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	j := gjson.ParseBytes(b)
+	a.data = j
+	return j
+}
+
+func (a *AppConfig) GatherPlugins() []*ulld_plugin.Plugin {
+	var res []*ulld_plugin.Plugin
+	j := a.Json()
+	plugins := j.Get("plugins").Array()
+	for _, p := range plugins {
+		res = append(res, ulld_plugin.PluginJsonToStruct(p))
+	}
+	j.Get("slots").ForEach(func(key, value gjson.Result) bool {
+		res = append(res, ulld_plugin.SlotJsonToStruct(key, value)...)
+		return true
+	})
+	return res
 }

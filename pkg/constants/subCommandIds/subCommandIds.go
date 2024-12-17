@@ -6,4 +6,5 @@ const (
 	GatherAppConfig SubCommandId = iota
 	GatherPlugins
 	GatherRootPackageJson
+	InstallDependencies
 )
